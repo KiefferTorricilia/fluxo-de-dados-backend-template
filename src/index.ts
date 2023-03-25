@@ -21,32 +21,108 @@ app.get("/accounts", (req: Request, res: Response) => {
 })
 
 app.get("/accounts/:id", (req: Request, res: Response) => {
-    const id = req.params.id
+   
+    try {
+        const id = req.params.id
 
-    const result = accounts.find((account) => account.id === id) 
+        const result = accounts.find((account) => account.id === id) 
 
-    res.status(200).send(result)
+        if(!result){
+            res.status(404)
+            throw new Error("Conta não encontrada. Verifique a id.")
+        }
+    
+        res.status(200).send(result)
+
+    } catch (error) {
+
+        if(res.statusCode === 200){
+            res.status(500)
+        }
+
+        console.log(error)
+
+        res.status(404).send(error.message)
+    }
 })
 
 app.delete("/accounts/:id", (req: Request, res: Response) => {
+    try {
+        
     const id = req.params.id
+
+    if(id[0] !== "a"){
+        res.status(400)
+        throw new Error("id inválido. Deve iniciar com a  letra a.")
+    }
 
     const accountIndex = accounts.findIndex((account) => account.id === id)
 
     if (accountIndex >= 0) {
         accounts.splice(accountIndex, 1)
+    } else {
+        res.status(404)
+        throw new Error("Conta inexistente. Verifique o id.")
     }
 
     res.status(200).send("Item deletado com sucesso")
+
+    } catch (error) {
+        if(res.statusCode === 200){
+            res.status(500)
+        }
+
+        console.log(error)
+
+        res.status(404).send(error.message)
+        
+    }
 })
 
 app.put("/accounts/:id", (req: Request, res: Response) => {
+  try {
+    
     const id = req.params.id
 
     const newId = req.body.id as string | undefined
     const newOwnerName = req.body.ownerName as string | undefined
     const newBalance = req.body.balance as number | undefined
     const newType = req.body.type as ACCOUNT_TYPE | undefined
+
+    if(newId !== undefined){
+        if(newId[0] !== "a" ){
+            res.status(400);
+            throw new Error("id deve iniciar com a letra a.")
+        }
+    }
+
+    if(newOwnerName !== undefined){
+        if(newOwnerName.length < 2){
+            res.status(400);
+            throw new Error("OwnerName deve ter no mínimo dois caracteres.")
+        }
+    }
+
+    if(newBalance !== undefined){
+        if(typeof newBalance !== "number"){
+            res.status(400)
+            throw new Error("Balance deve ser um número.")
+        }
+
+        if(newBalance < 0){
+            res.status(400)
+            throw new Error("Balance deve ser maior ou igual a zero.")
+        }
+    }
+
+    if(newType !== undefined){
+        if(newType !== "Ouro" && newType !== "Platina" && newType !== "Black"){
+            res.status(400);
+            throw new Error("Type deve ser Ouro, Platina ou Black")
+        }
+
+    }
+    
 
     const account = accounts.find((account) => account.id === id) 
 
@@ -59,4 +135,14 @@ app.put("/accounts/:id", (req: Request, res: Response) => {
     }
 
     res.status(200).send("Atualização realizada com sucesso")
+
+  } catch (error) {
+      if(res.statusCode === 200){
+            res.status(500)
+        }
+
+        console.log(error)
+
+        res.status(404).send(error.message)
+  }
 })
